@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon"  type="image/png" href="http://icons.iconarchive.com/icons/artdesigner/emoticons/128/crazy-icon.png" />
+
+	
+	
+    <title>mon</title>
+	<script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+	
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.13.5/bootstrap-table.css" />
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.13.5/bootstrap-table.js"></script>
+	
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.18.0/axios.js"></script>
+<script>
+ 
+</script>
+
+<style>
+	.error{
+	   color: red;
+		font-weight: bold;
+	  }
+	  
+	  	.success{
+	   color: green;
+	   font-weight: bold;
+	  }
+
+</style>
+
+  </head>
+
+  <body>
+
+
+<div class="container-fluid">
+	<div class="row">
+		<div class="col-md-12">
+			<table id="table"></table>
+		</div>
+	</div>
+</div>
+
+
+
+<script>
+setInterval(function(){ location.reload(); }, 5 * 60 * 1000);
+var server = "http://localhost:8888/service-monitor";
+//var server = "http://localhost:8889";
+var serviceError = "Cannot check data now";
+
+function makeid() {
+  var text = "";
+  var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+  for (var i = 0; i < 5; i++)
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+  return text;
+}
+
+var ping = (address, element_id)=>{
+	axios.get(server + "/ping?address=" + address).then(res=>{
+		$("#" + element_id).html(res.data);
+	}).catch(()=>{
+		$("#" + element_id).text(serviceError);
+	});
+};
+
+var url = (address, test, element_id)=>{
+	axios.post(server + "/url", {
+		"url": address,
+		"test":test
+	}).then(res=>{
+		$("#" + element_id).html(res.data);
+	}).catch(()=>{
+		$("#" + element_id).text(serviceError);
+	});
+};
+
+$('#table').bootstrapTable({
+  columns: [
+    {
+      field: 'data',
+      title: "Service",
+      width: 100
+    },
+    {
+      field: 'des',
+      title: "Description",
+      width: 300
+    },
+    {
+      field: 'type',
+      title: "Type",
+      width: 100
+    },
+  {
+    field: 'status',
+    title: 'Status',
+	formatter: function(data, row){
+		var random_id = makeid();
+		if(row.type === 'ping'){
+			ping(row.data, random_id);
+			setInterval(()=>{
+				ping(row.data, random_id);
+			}, row.interval);
+		} else {
+			url(row.data, row.test, random_id);
+			setInterval(()=>{
+				url(row.data, row.test, random_id);
+			}, row.interval);
+		}
+		return "<span id='" + random_id + "'></i>Loading...</i></span>";
+	}
+   }
+  ],
+  data: [
+      {
+        type: "ping",
+        interval: 5000,
+        des: 'Production Server LAZY',
+        data: '45.32.109.42'
+	    },
+      {
+        type: "ping",
+        interval: 5000,
+        des: 'Production Server CHIHO',
+        data: 'production-chiho'
+	    },
+      {
+        type: "url",
+        interval: 2000,
+        des: 'Production Server LAZY:API',
+        data: 'https://lazylearn.com:8080',
+        test: 'to'
+	    },    
+      {
+        type: "url",
+        interval: 2000,
+        des: 'Production Webapp CHIHO',
+        data: 'https://momo.vn/chiho',
+        test: 'CSKH'
+	    },
+  ]
+});
+</script>
+
+  
+</body>
+</html>
